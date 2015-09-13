@@ -25,6 +25,11 @@
                 top: 0;
                 left: 0;
             }
+            #save-button {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+            }
         </style>
     </head>
     <body>
@@ -34,6 +39,7 @@
         </header>
         <section id="main-content">
             <section id="main-demo"></section>
+            <button id="save-button" onclick="save()">Save</button>
         </section>
         <footer class="site-footer">
             <span class="site-footer-owner"><a href="https://github.com/jsgao0/CustomTools">Customtools</a> is maintained by <a href="https://github.com/jsgao0">jsgao0</a>.</span>
@@ -147,7 +153,10 @@
                 if(step == 1) {
                     toolkit.mainParts.forEach(function(ele, idx) {
                         toolkit.loadObject(ele, setPosition, addToScene, idx);
-                    })
+                    });
+                }
+                if(step == 2) {
+                    toolkit.add
                 }
             }
 
@@ -156,7 +165,9 @@
                     toolkit.mainParts.forEach(function(ele) {
                         scene.remove(ele.model);
                         scene.add(selectedModel);
-                    })
+                        camera.position.set(0, 250, 0);
+                    });
+                    prepareStep(2);
                 }
             }
 
@@ -169,9 +180,8 @@
                 scene = new THREE.Scene();
 
                 // Light
-                var ambient = new THREE.AmbientLight( 0xFFFFFF );
+                var ambient = new THREE.AmbientLight( 0xAAAAAA );
                 scene.add( ambient );
-
                 
                 prepareStep(1)
 
@@ -182,7 +192,6 @@
                 var mainDemo = document.getElementById("main-demo");
                 renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
                 renderer.setPixelRatio( window.devicePixelRatio );
-                // renderer.setSize(mainDemo.offsetWidth, mainDemo.offsetHeight);
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 mainDemo.appendChild( renderer.domElement );
 
@@ -200,8 +209,6 @@
 
                 windowHalfX = window.innerWidth / 2;
                 windowHalfY = window.innerHeight / 2;
-                var mainDemo = document.getElementById("main-demo");
-                // renderer.setSize(mainDemo.offsetWidth, mainDemo.offsetHeight);
                 renderer.setSize(window.innerWidth, window.innerHeight);
 
                 camera.aspect = window.innerWidth / window.innerHeight;
@@ -212,13 +219,14 @@
             var getModelsFromObjectList = function(objectArray) {
                 return objectArray.map(function(ele) {
                     return ele.model;
-                })
+                });
             }
 
             function onDocumentMouseMove(event) {
 
                 mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
                 mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
                 var intersects = raycaster.intersectObjects(getModelsFromObjectList(toolkit.mainParts), true);
                 if ( intersects.length > 0 ) {
                     if ( INTERSECTED != intersects[ 0 ].object ) {
@@ -239,7 +247,6 @@
                 if(intersects.length > 0)  {
                     SELECTED = intersects[0].object;
                     INTERSECTED.material.emissive.setHex( 0xffff00 );
-                    selectModelAtStep(1, SELECTED);
                 }
  
             }
@@ -249,6 +256,7 @@
                 var intersects = raycaster.intersectObjects(getModelsFromObjectList(toolkit.mainParts), true );
                 if(intersects.length > 0) {
                     INTERSECTED.material.emissive.setHex( 0xff0000 );
+                    selectModelAtStep(1, SELECTED);
                 } 
             }
 
@@ -273,6 +281,10 @@
             init();
             animate();
         
+            function save() {
+                alert(1);
+            }
+
         </script>
 
     </body>
