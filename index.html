@@ -30,6 +30,37 @@
                 top: 10px;
                 left: 10px;
             }
+            #panel {
+                position: absolute;
+                top: 40px;
+                left: 10px;
+                overflow: hidden;
+            }
+            .panel-icons, #the-logo {
+                background: url("images/TOOLS_Templates_icons.png"), transparent;
+                background-repeat: no-repeat;
+                background-size: 800px 590px;
+            }
+            .main-parts, #the-logo {
+                border: 10px solid transparent;
+                width: 270px;
+                height: 130px;
+            }
+            #the-logo {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background-position: 0 0px;
+            }
+            #the-single {
+                background-position: 0 -150px;
+            }
+            #the-dobule {
+                background-position: 0 -300px;
+            }
+            #the-plank {
+                background-position: 0 -450px;
+            }
         </style>
     </head>
     <body>
@@ -43,6 +74,12 @@
                 <button id="save-stl-button" onclick="saveAsSTL()">Save As STL</button>
                 <button id="save-obj-button" onclick="saveAsOBJ()">Save As Object</button>
             </div>
+            <div id="panel">
+                <div id="the-single" class="main-parts panel-icons" onclick="showModel('mainParts', 0)"></div>
+                <div id="the-dobule" class="main-parts panel-icons" onclick="showModel('mainParts', 1)"></div>
+                <div id="the-plank" class="main-parts panel-icons" onclick="showModel('mainParts', 2)"></div>
+            </div> 
+            <div id="the-logo" class="main-parts panel-icons"></div>
         </section>
         <footer class="site-footer">
             <span class="site-footer-owner"><a href="https://github.com/jsgao0/CustomTools">Customtools</a> is maintained by <a href="https://github.com/jsgao0">jsgao0</a>.</span>
@@ -97,7 +134,7 @@
                 this.mainPartPath = 'obj/';
                 this.addOnPath = 'obj/Add_Ons/';
                 this.cutOutPath = 'obj/Cut_Out/';
-                this.mainPartNames = ['TOOLS_Templates_TypeA', 'TOOLS_Templates_TypeB', 'TOOLS_Templates_TypeB'];
+                this.mainPartNames = ['TOOLS_Templates_TypeA', 'TOOLS_Templates_TypeB', 'TOOLS_Templates_TypeC'];
                 this.addOnNames = ['TOOLS_Templates_Hexagon_Add_on', 'TOOLS_Templates_SpannerHead_Add_on', 'TOOLS_Templates_TireTool_Add_on'];
                 this.cutOutNames = ['TOOLS_Templates_Hexagon_Cut_Outs', 'TOOLS_Templates_Spanner_Cut_Outs', 'TOOLS_Templates_Square_Cut_Outs', 'TOOLS_Templates_TireTool_Cut_Outs'];
                 this.totalFiles = this.mainPartNames.length + this.addOnNames.length + this.cutOutNames.length;
@@ -110,7 +147,7 @@
                 this.bindPath = function(path, fileName, fileType) {
                     return path + fileName + fileType;
                 }
-                this.loadObject = function(modelObject, callback_setPosition, callback_addToScene, idx) { 
+                this.loadObject = function(modelObject) { 
                     // Model loader.
                     THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
                     // Model loading functions.
@@ -124,10 +161,6 @@
                     };
                     var loader = new THREE.OBJMTLLoader();
                     loader.load( modelObject.obj, modelObject.path, function ( object ) {
-
-                        callback_setPosition(object, idx);
-
-                        callback_addToScene(object);
 
                         modelObject.model = object;
                     
@@ -146,39 +179,32 @@
 
             var toolkit;
 
-            function prepareStep(step) {
-
-                var addToScene = function(object) {
-                    scene.add(object);
-                }
-
-                var setPosition = function(object, idx) {
-                    object.position.set(0, 0, 150 * (1-idx));
-                }
-
-                if(step == 1) {
-                    toolkit.mainParts.forEach(function(ele, idx) {
-                        toolkit.loadObject(ele, setPosition, addToScene, idx);
-                    });
-                }
-                if(step == 2) {
-                    toolkit.add
-                }
+            function showModel(whichPart, index) {
+                toolkit[whichPart].forEach(function(ele) {
+                    scene.remove(ele.model);
+                })
+                scene.add(toolkit[whichPart][index].model);
             }
 
-            function selectModelAtStep(step, selectedModel) {
-                if(step == 1) {
-                    toolkit.mainParts.forEach(function(ele) {
-                        scene.remove(ele.model);
-                        scene.add(selectedModel);
-                        camera.position.set(0, 250, 0);
-                    });
-                    prepareStep(2);
-                }
+            function prepareStep() {
+
+                toolkit.mainParts.forEach(function(ele) {
+                    toolkit.loadObject(ele);
+                });
+            
+                toolkit.addOns.forEach(function(ele) {
+                    toolkit.loadObject(ele);
+                });
+
+                toolkit.cutOuts.forEach(function(ele) {
+                    toolkit.loadObject(ele)
+                });
+                
             }
 
             function init() {
                 toolkit = new toolkit();
+                prepareStep();
 
                 initCamera(new THREE.Vector3(0, 300, 0));
 
@@ -189,7 +215,6 @@
                 var ambient = new THREE.AmbientLight( 0xAAAAAA );
                 scene.add( ambient );
                 
-                prepareStep(1)
 
                 // Raycaster
                 raycaster = new THREE.Raycaster();
@@ -233,7 +258,7 @@
                 mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
                 mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
-                var intersects = raycaster.intersectObjects(getModelsFromObjectList(toolkit.mainParts), true);
+                var intersects = raycaster.intersectObjects(scene.children, true);
                 if ( intersects.length > 0 ) {
                     if ( INTERSECTED != intersects[ 0 ].object ) {
                         if ( INTERSECTED )  INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
@@ -243,13 +268,14 @@
                 } else {
                     if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
                     INTERSECTED = null;
+                    SELECTED = null
                 }
 
             }
 
             function onDocumentMouseDown(event) {
                 event.preventDefault();
-                var intersects = raycaster.intersectObjects(getModelsFromObjectList(toolkit.mainParts), true );
+                var intersects = raycaster.intersectObjects(scene.children, true );
                 if(intersects.length > 0)  {
                     SELECTED = intersects[0].object;
                     INTERSECTED.material.emissive.setHex( 0xffff00 );
@@ -259,10 +285,10 @@
 
             function onDocumentMouseUp(event) {
                 event.preventDefault();
-                var intersects = raycaster.intersectObjects(getModelsFromObjectList(toolkit.mainParts), true );
+                var intersects = raycaster.intersectObjects(scene.children, true );
                 if(intersects.length > 0) {
                     INTERSECTED.material.emissive.setHex( 0xff0000 );
-                    selectModelAtStep(1, SELECTED);
+                    selectModelAtStep(SELECTED);
                 } 
             }
 
