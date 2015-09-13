@@ -25,7 +25,7 @@
                 top: 0;
                 left: 0;
             }
-            #save-button {
+            #button-zone {
                 position: absolute;
                 top: 10px;
                 left: 10px;
@@ -39,7 +39,10 @@
         </header>
         <section id="main-content">
             <section id="main-demo"></section>
-            <button id="save-button" onclick="save()">Save</button>
+            <div id="button-zone">
+                <button id="save-stl-button" onclick="saveAsSTL()">Save As STL</button>
+                <button id="save-obj-button" onclick="saveAsOBJ()">Save As Object</button>
+            </div>
         </section>
         <footer class="site-footer">
             <span class="site-footer-owner"><a href="https://github.com/jsgao0/CustomTools">Customtools</a> is maintained by <a href="https://github.com/jsgao0">jsgao0</a>.</span>
@@ -62,6 +65,9 @@
         <script type="text/javascript" src="./javascripts/DDSLoader.js"></script>
         <script type="text/javascript" src="./javascripts/MTLLoader.js"></script>
         <script type="text/javascript" src="./javascripts/OBJMTLLoader.js"></script>
+        <script type="text/javascript" src="./javascripts/OBJExporter.js"></script>
+        <script type="text/javascript" src="./javascripts/STLBinaryExporter.js"></script>
+        <script type="text/javascript" src="./javascripts/STLExporter.js"></script>
 
         <script type="text/javascript">
 
@@ -280,9 +286,26 @@
 
             init();
             animate();
-        
-            function save() {
-                alert(1);
+
+            function generateLink(dataFormat, data) {
+                var link = document.createElement('a');
+                link.download = "CustomTool" + dataFormat;
+                link.href = data;
+                return link;
+            }
+
+            function saveAsSTL() {
+                var stlExporter = new THREE.STLExporter();
+                if(SELECTED) {
+                    generateLink('.stl', 'data:,' + encodeURIComponent(stlExporter.parse(SELECTED))).click();
+                }
+            }
+
+            function saveAsOBJ() {
+                var objExporter = new THREE.OBJExporter();
+                if(SELECTED) {
+                    generateLink('.obj', 'data:,' + encodeURIComponent(objExporter.parse(SELECTED))).click();
+                }
             }
 
         </script>
