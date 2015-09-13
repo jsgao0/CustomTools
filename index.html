@@ -4,12 +4,27 @@
         <meta charset="UTF-8">
         <title>Customtools by jsgao0</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script type="text/javascript" src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+        <script type="text/javascript" src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
         <style type="text/css">
+            html, body {
+                margin: 0px;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
             header, footer {
                 display: none;
             }
-            body { margin: 0; }
-            canvas { width: 100%; height: 100% }
+            #main-content, #main-demo {
+                height: 100%;
+                width: 100%;
+            }
+            #main-demo {
+                position: relative;
+                top: 0;
+                left: 0;
+            }
         </style>
     </head>
     <body>
@@ -17,12 +32,9 @@
             <h1 class="project-name">Customtools</h1>
             <h2 class="project-tagline">It&#39;s only bicycle tools.</h2>
         </header>
-
-        <section class="main-content">
-        
-
+        <section id="main-content">
+            <section id="main-demo"></section>
         </section>
-
         <footer class="site-footer">
             <span class="site-footer-owner"><a href="https://github.com/jsgao0/CustomTools">Customtools</a> is maintained by <a href="https://github.com/jsgao0">jsgao0</a>.</span>
 
@@ -50,72 +62,136 @@
 
             var container, stats;
 
-            var camera, scene, renderer;
+            var camera, scene, raycaster, renderer;
 
-            var mouseX = 0, mouseY = 0;
+            var mouse = new THREE.Vector2(), INTERSECTED, SELECTED=null;
 
             var windowHalfX = window.innerWidth / 2;
             var windowHalfY = window.innerHeight / 2;
 
+            var mainParts = new Array(),
+                addOns = new Array(),
+                cutOuts = new Array();
 
-            init();
-            animate();
+            var initCamera = function(positionVector) {
+                // Camera
+                camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
+                camera.position.set(positionVector.x, positionVector.y, positionVector.z);
+            }
 
+            var toolkit = function() {
+                var thisObject = this;
+                this.loadedFileAmount = 0;
+                this.mainPartPath = 'obj/';
+                this.addOnPath = 'obj/Add_Ons/';
+                this.cutOutPath = 'obj/Cut_Out/';
+                this.mainPartNames = ['TOOLS_Templates_TypeA', 'TOOLS_Templates_TypeB', 'TOOLS_Templates_TypeB'];
+                this.addOnNames = ['TOOLS_Templates_Hexagon_Add_on', 'TOOLS_Templates_SpannerHead_Add_on', 'TOOLS_Templates_TireTool_Add_on'];
+                this.cutOutNames = ['TOOLS_Templates_Hexagon_Cut_Outs', 'TOOLS_Templates_Spanner_Cut_Outs', 'TOOLS_Templates_Square_Cut_Outs', 'TOOLS_Templates_TireTool_Cut_Outs'];
+                this.totalFiles = this.mainPartNames.length + this.addOnNames.length + this.cutOutNames.length;
+                this.isCompletedLoading = function() {
+                    return thisObject.totalFiles == thisObject.loadedFileAmount;
+                }
+                this.getTotalFileAmount = function() {
+                    thisObject.totalFiles = thisObject.mainPartNames.length + thisObject.addOnNames.length + thisObject.cutOutNames.length;
+                }
+                this.bindPath = function(path, fileName, fileType) {
+                    return path + fileName + fileType;
+                }
+                this.loadObject = function(modelObject, callback_setPosition, callback_addToScene, idx) { 
+                    // Model loader.
+                    THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+                    // Model loading functions.
+                    var onProgress = function ( xhr ) {
+                        if ( xhr.lengthComputable ) {
+                            var percentComplete = xhr.loaded / xhr.total * 100;
+                            console.log( Math.round(percentComplete, 2) + '% downloaded' );
+                        }
+                    };
+                    var onError = function ( xhr ) {
+                    };
+                    var loader = new THREE.OBJMTLLoader();
+                    loader.load( modelObject.obj, modelObject.path, function ( object ) {
+
+                        callback_setPosition(object, idx);
+
+                        callback_addToScene(object);
+
+                        modelObject.model = object;
+                    
+                    }, onProgress, onError );
+                }
+                this.getObjects = function(objectNames, objectPath) {
+                    return objectNames.map(function(ele) {
+                        var returnObject = {obj: thisObject.bindPath(objectPath, ele, '.obj'), mtl: thisObject.bindPath(objectPath, ele, '.mtl')};
+                        return returnObject;
+                    });
+                }
+                this.mainParts = this.getObjects(thisObject.mainPartNames, thisObject.mainPartPath);
+                this.addOns = this.getObjects(thisObject.addOnNames, thisObject.addOnPath);
+                this.cutOuts = this.getObjects(thisObject.cutOutNames, thisObject.cutOutPath);
+            }
+
+            var toolkit;
+
+            function prepareStep(step) {
+
+                var addToScene = function(object) {
+                    scene.add(object);
+                }
+
+                var setPosition = function(object, idx) {
+                    object.position.set(0, 0, 150 * (1-idx));
+                }
+
+                if(step == 1) {
+                    toolkit.mainParts.forEach(function(ele, idx) {
+                        toolkit.loadObject(ele, setPosition, addToScene, idx);
+                    })
+                }
+            }
+
+            function selectModelAtStep(step, selectedModel) {
+                if(step == 1) {
+                    toolkit.mainParts.forEach(function(ele) {
+                        scene.remove(ele.model);
+                        scene.add(selectedModel);
+                    })
+                }
+            }
 
             function init() {
+                toolkit = new toolkit();
 
-                container = document.createElement( 'div' );
-                document.getElementsByClassName("main-content")[0].appendChild( container );
+                initCamera(new THREE.Vector3(0, 300, 0));
 
-                camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
-                camera.position.y = 200;
-
-                // scene
-
+                // Scene
                 scene = new THREE.Scene();
 
+                // Light
                 var ambient = new THREE.AmbientLight( 0xFFFFFF );
                 scene.add( ambient );
 
-                var directionalLight = new THREE.DirectionalLight( 0xffeeee );
-                // directionalLight.position.set( 0, 20, 0 ).normalize();
-                // scene.add( directionalLight );
+                
+                prepareStep(1)
 
-                // model
+                // Raycaster
+                raycaster = new THREE.Raycaster();
 
-                var onProgress = function ( xhr ) {
-                    if ( xhr.lengthComputable ) {
-                        var percentComplete = xhr.loaded / xhr.total * 100;
-                        console.log( Math.round(percentComplete, 2) + '% downloaded' );
-                    }
-                };
-
-                var onError = function ( xhr ) {
-                };
-
-                THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
-
-                var loader = new THREE.OBJMTLLoader();
-                loader.load( 'obj/TOOLS_Templates_colour_TEST.obj', 'obj/TOOLS_Templates_colour_TEST.mtl', function ( object ) {
-
-                    object.position.set(0, 0, 0);
-                    console.log(object)
-                    console.log(camera)
-                    console.log(scene)
-                    scene.add( object );
-
-                }, onProgress, onError );
-
-
-                renderer = new THREE.WebGLRenderer();
+                // Rendering.
+                var mainDemo = document.getElementById("main-demo");
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
                 renderer.setPixelRatio( window.devicePixelRatio );
-                renderer.setSize( window.innerWidth, window.innerHeight );
-                container.appendChild( renderer.domElement );
+                // renderer.setSize(mainDemo.offsetWidth, mainDemo.offsetHeight);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                mainDemo.appendChild( renderer.domElement );
 
-                // document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-
+                // Event binding.
+                renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
+                renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false);
+                renderer.domElement.addEventListener('mouseup', onDocumentMouseUp, false);
                 window.addEventListener( 'resize', onWindowResize, false );
-
+                
             }
 
             function onWindowResize(event) {
@@ -124,22 +200,57 @@
 
                 windowHalfX = window.innerWidth / 2;
                 windowHalfY = window.innerHeight / 2;
+                var mainDemo = document.getElementById("main-demo");
+                // renderer.setSize(mainDemo.offsetWidth, mainDemo.offsetHeight);
+                renderer.setSize(window.innerWidth, window.innerHeight);
 
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
 
-                renderer.setSize( window.innerWidth, window.innerHeight );
+            }
+
+            var getModelsFromObjectList = function(objectArray) {
+                return objectArray.map(function(ele) {
+                    return ele.model;
+                })
+            }
+
+            function onDocumentMouseMove(event) {
+
+                mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+                mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+                var intersects = raycaster.intersectObjects(getModelsFromObjectList(toolkit.mainParts), true);
+                if ( intersects.length > 0 ) {
+                    if ( INTERSECTED != intersects[ 0 ].object ) {
+                        if ( INTERSECTED )  INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+                        INTERSECTED = intersects[ 0 ].object;
+                        INTERSECTED.material.emissive.setHex( 0xff0000 );
+                    }
+                } else {
+                    if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+                    INTERSECTED = null;
+                }
 
             }
 
-            function onDocumentMouseMove( event ) {
-
-                mouseX = ( event.clientX - windowHalfX ) / 2;
-                mouseY = ( event.clientY - windowHalfY ) / 2;
-
+            function onDocumentMouseDown(event) {
+                event.preventDefault();
+                var intersects = raycaster.intersectObjects(getModelsFromObjectList(toolkit.mainParts), true );
+                if(intersects.length > 0)  {
+                    SELECTED = intersects[0].object;
+                    INTERSECTED.material.emissive.setHex( 0xffff00 );
+                    selectModelAtStep(1, SELECTED);
+                }
+ 
             }
 
-            //
+            function onDocumentMouseUp(event) {
+                event.preventDefault();
+                var intersects = raycaster.intersectObjects(getModelsFromObjectList(toolkit.mainParts), true );
+                if(intersects.length > 0) {
+                    INTERSECTED.material.emissive.setHex( 0xff0000 );
+                } 
+            }
 
             function animate() {
 
@@ -148,17 +259,19 @@
 
             }
 
+            var isWatchingMenu = false;
+
             function render() {
 
-                // camera.position.x += ( mouseX - camera.position.x ) * .05;
-                // camera.position.y += ( - mouseY - camera.position.y ) * .05;
+                camera.lookAt( new THREE.Vector3(0, 0, 0));
 
-                camera.lookAt( scene.position );
+                raycaster.setFromCamera( mouse, camera );
 
                 renderer.render( scene, camera );
-
             }
 
+            init();
+            animate();
         
         </script>
 
