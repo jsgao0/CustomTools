@@ -16,6 +16,9 @@
             header, footer {
                 display: none;
             }
+            .float-left {
+                float: left;
+            }
             #main-content, #main-demo {
                 height: 100%;
                 width: 100%;
@@ -30,16 +33,34 @@
                 top: 10px;
                 left: 10px;
             }
-            #panel {
+            .panel {
                 position: absolute;
-                top: 40px;
-                left: 10px;
                 overflow: hidden;
             }
+            #left-panel {
+                top: 40px;
+                left: 10px;
+            }
+            #right-panel {
+                color: #fff;
+                top: 150px;
+                right: 50px;
+            }
             .panel-icons, #the-logo {
-                background: url("images/TOOLS_Templates_icons.png"), transparent;
+                background: url("images/TOOLS_Templates_Vertical_SPACE_UPDATE.png"), transparent;
                 background-repeat: no-repeat;
-                background-size: 800px 590px;
+                background-size: 276px 992px;
+            }
+            .panel-icons:hover {
+                background: url("images/TOOLS_Templates_Vertical_SPACE_UPDATE.png"), rgba(160, 160, 160, 0.3);
+                background-repeat: no-repeat;
+                background-size: 276px 992px;
+                cursor: pointer;
+            }
+            .selected-item {
+                background: url("images/TOOLS_Templates_Vertical_SPACE_UPDATE.png"), rgba(160, 160, 160, 0.5);
+                background-repeat: no-repeat;
+                background-size: 276px 992px;
             }
             .main-parts, #the-logo {
                 border: 10px solid transparent;
@@ -61,6 +82,46 @@
             #the-plank {
                 background-position: 0 -450px;
             }
+            .small-parts {
+                float: left;
+                height: 70px;
+                width: 70px;
+            }
+            .addon-hexagon, .addon-spannerhead, .addon-tiretool {
+            }
+            .addon-hexagon > div:first-of-type {
+                background-position: 1.5px -580px;
+            }
+            .addon-hexagon > div:nth-of-type(2) {
+                background-position: -103px -583px;
+            }
+            .addon-hexagon > div:nth-of-type(3) {
+                background-position: -205px -585px;
+            }
+            .addon-spannerhead > div:first-of-type {
+                background-position: 1.5px -670px;
+            }
+            .addon-spannerhead > div:nth-of-type(2) {
+                background-position: -103px -670px;
+            }
+            .addon-spannerhead > div:nth-of-type(3) {
+                background-position: -205px -670px;
+            }
+            .addon-tiretool > div:first-of-type {
+                background-position: -190px -920px;
+            }
+            .cutout-spanner, .cutout-hexagon, .cutout-square, .cutout-tiretool {
+
+            }
+            .cutout-spanner > div:first-of-type {
+                background-position: 1.5px -670px;
+            }
+            .cutout-spanner > div:nth-of-type(2) {
+                background-position: -103px -670px;
+            }
+            .cutout-spanner > div:nth-of-type(3) {
+                background-position: -205px -670px;
+            }
         </style>
     </head>
     <body>
@@ -74,12 +135,42 @@
                 <button id="save-stl-button" onclick="saveAsSTL()">Save As STL</button>
                 <button id="save-obj-button" onclick="saveAsOBJ()">Save As Object</button>
             </div>
-            <div id="panel">
-                <div id="the-single" class="main-parts panel-icons" onclick="showModel('mainParts', 0)"></div>
-                <div id="the-dobule" class="main-parts panel-icons" onclick="showModel('mainParts', 1)"></div>
-                <div id="the-plank" class="main-parts panel-icons" onclick="showModel('mainParts', 2)"></div>
+            <div id="left-panel" class="panel">
+                <div id="the-single" class="main-parts panel-icons"></div>
+                <div id="the-dobule" class="main-parts panel-icons"></div>
+                <div id="the-plank" class="main-parts panel-icons"></div>
             </div> 
-            <div id="the-logo" class="main-parts panel-icons"></div>
+            <div id="right-panel" class="panel">
+                <div class="addon-hexagon">
+                    <div class="addon panel-icons small-parts"></div>
+                    <div class="addon panel-icons small-parts"></div>
+                    <div class="addon panel-icons small-parts"></div>
+                </div>
+                <div class="addon-spannerhead">
+                    <div class="addon panel-icons small-parts"></div>
+                    <div class="addon panel-icons small-parts"></div>
+                    <div class="addon panel-icons small-parts"></div>
+                </div>
+                <div class="addon-tiretool">
+                    <div class="addon panel-icons small-parts"></div>
+                    <div class="float-left"></div>
+                </div>
+                <div class="cutout-spanner">
+                    <div class="cutout panel-icons small-parts"></div>
+                    <div class="cutout panel-icons small-parts"></div>
+                    <div class="cutout panel-icons small-parts"></div>
+                </div>
+                <div class="cutout-hexagon">
+                    <div class="cutout panel-icons small-parts"></div>
+                    <div class="cutout panel-icons small-parts"></div>
+                    <div class="cutout panel-icons small-parts"></div>
+                </div>
+                <div class="cutout-square"></div>
+                <div class="cutout-tiretool">
+                    <div class="cutout panel-icons small-parts"></div>
+                </div>
+            </div>
+            <div id="the-logo"></div>
         </section>
         <footer class="site-footer">
             <span class="site-footer-owner"><a href="https://github.com/jsgao0/CustomTools">Customtools</a> is maintained by <a href="https://github.com/jsgao0">jsgao0</a>.</span>
@@ -135,7 +226,7 @@
                 this.addOnPath = 'obj/Add_Ons/';
                 this.cutOutPath = 'obj/Cut_Out/';
                 this.mainPartNames = ['TOOLS_Templates_TypeA', 'TOOLS_Templates_TypeB', 'TOOLS_Templates_TypeC'];
-                this.addOnNames = ['TOOLS_Templates_Hexagon_Add_on', 'TOOLS_Templates_SpannerHead_Add_on', 'TOOLS_Templates_TireTool_Add_on'];
+                this.addOnNames = ['TOOLS_Templates_SpannerHead_Add_on', 'TOOLS_Templates_Hexagon_Add_on', 'TOOLS_Templates_TireTool_Add_on'];
                 this.cutOutNames = ['TOOLS_Templates_Hexagon_Cut_Outs', 'TOOLS_Templates_Spanner_Cut_Outs', 'TOOLS_Templates_Square_Cut_Outs', 'TOOLS_Templates_TireTool_Cut_Outs'];
                 this.totalFiles = this.mainPartNames.length + this.addOnNames.length + this.cutOutNames.length;
                 this.isCompletedLoading = function() {
@@ -185,6 +276,32 @@
                 })
                 scene.add(toolkit[whichPart][index].model);
             }
+
+            function resetClassName(allItems, selectedItem) {
+                allItems.removeClass("selected-item");
+                selectedItem.addClass("selected-item");
+            }
+
+            $(document).ready(function() {
+                $(".main-parts").click(function() {
+                    showModel('mainParts', $(this).index());
+                    resetClassName($(".main-parts"), $(this));
+                });
+                $(".addon-hexagon > .small-parts").click(function(){
+                    showModel('addOns', 0);
+                    resetClassName($(".small-parts"), $(this));
+                });
+                $(".addon-spannerhead > .small-parts").click(function(){
+                    showModel('addOns', 1);
+                    resetClassName($(".small-parts"), $(this));
+                });
+                $(".addon-tiretool > .small-parts").click(function(){
+                    showModel('addOns', 2);
+                    resetClassName($(".small-parts"), $(this));
+                });
+            });
+
+
 
             function prepareStep() {
 
@@ -333,7 +450,6 @@
                     generateLink('.obj', 'data:,' + encodeURIComponent(objExporter.parse(SELECTED))).click();
                 }
             }
-
         </script>
 
     </body>
